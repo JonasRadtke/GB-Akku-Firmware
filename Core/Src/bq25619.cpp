@@ -110,6 +110,16 @@ void bq25619::ResetWatchDog(){
 	return;
 }
 
+void bq25619::chargeBitEnable(uint32_t enable){
+	if(enable){
+		this->readWriteRegister(REG_CHARGER_CTRL_0, 0x10, 0x10);
+	}
+	else{
+		this->readWriteRegister(REG_CHARGER_CTRL_0, 0x10, 0x10);
+	}
+	return;
+}
+
 
 // Reg 02 Charge Current Limit
 void bq25619::setChargeCurrentLimit(uint32_t current){
@@ -234,4 +244,23 @@ void bq25619::readWriteRegister(uint8_t command ,uint8_t mask, uint8_t data){
 	regValue |= data;
 	this->writeRegister(command, regValue);
 	return;
+}
+
+uint32_t bq25619::detectToggle(uint32_t currentState, uint32_t currentTime) {
+    if ((currentTime - lastToggleTime) > 10000) {
+        toggleCount = 0;
+    }
+
+    if (currentState != lastState) {
+        if ((currentTime - lastToggleTime) <= 60000) {
+            toggleCount++;
+        } else {
+            toggleCount = 1;
+        }
+        lastToggleTime = currentTime;
+    }
+
+    lastState = currentState;
+
+    return (toggleCount > 20) ? 1 : 0;
 }

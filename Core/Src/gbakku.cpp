@@ -30,7 +30,9 @@ void gbakku::run(){
 	// Sleep and Wake Up
 	if(!charging && !wakeUpRequest && !ledInterface.getShowSocStatus() &&(this->sleepingDelay + 1000 < HAL_GetTick())){
 		sleeping = 1;
+		this->charger.disableCharging();
 		this->goingToSleep();
+
 	}
 	if(wakeUpRequest){
 		wakeUpRequest = 0;
@@ -44,10 +46,21 @@ void gbakku::run(){
 		this->timeStatus = HAL_GetTick();
 		this->getStatus();
 		this->charger.ResetWatchDog();
+		if(charger.detectToggle(this->charging, HAL_GetTick())){
+			this->cantChargeDetected = 1;
+		}
 	}
+
+	if(this->ovpUvpStepTime + 20000 < HAL_GetTick()){
+			this->ovpUvpStepTime = HAL_GetTick();
+			this->ovpUvpCycle();
+		}
+
 
 	// Status LED aktualisieren
 	ledInterface.showSocCalc(this->stateOfCharge, this->charging);
+
+
 
 	return;
 }
@@ -59,6 +72,7 @@ void gbakku::setChargerConfig(){
 	this->charger.setChargeCurrentLimit(1000);
 	this->charger.setPrechargeLimit(40);
 	this->charger.setTerminationLimit(60);
+	this->charger.chargeBitEnable(1);
 	return;
 }
 
@@ -81,6 +95,30 @@ void gbakku::wakeUp() {
 	HAL_TIM_Base_Start_IT(&htim21);
 	HAL_ResumeTick();
 	this->init();
+}
+
+void gbakku::ovpUvpCycle(){
+	if(this->cantChargeDetected){
+		switch(this->ovpUvpStep){
+		case 0:
+			this->charger.disableCharging();
+			this->ovpUvpStep = 1;
+		    break;
+		case 1:
+			this->charger.readWriteRegister(0x04, 0xF8, 0x08);
+			this->charger.enableCharging();
+			this->ovpUvpStep = 2;
+		    break;
+		case 2:
+			this->charger.readWriteRegister(0x04, 0xF8, 0x40);
+			this->ovpUvpStep = 3;
+			this->cantChargeDetected = 0;
+		    break;
+		}
+	}
+	else{
+		this->ovpUvpStep = 0;
+	}
 }
 
 

@@ -76,6 +76,11 @@ private:
 	uint32_t statusReg3 = 0;
 	bq25619_chrg_stat_t charge_status = BQ25619_CHRG_STAT_NOT_CHARGING;
 	bq25619_vbus_stat_t vbus_status = BQ25619_VBUS_STAT_NO_INPUT;
+
+    uint32_t lastToggleTime = 0;
+    uint32_t toggleCount = 0;
+    uint32_t lastState = 0;
+
 public:
 	bq25619(uint8_t adress);
 
@@ -93,6 +98,7 @@ public:
 	void setRecharcheThre(bq25619_recharge_thre_t voltage); //G
 	void setWachtdogTimer(bq25619_watchdog_timer_t timer); //G
 	void setBoostVoltage(bq25619_boost_voltage_t voltage); //G
+	void chargeBitEnable(uint32_t enable);
 
 	void readChargerStatus();
 	uint32_t getCharging();
@@ -107,6 +113,8 @@ public:
 	void readWriteRegister(uint8_t command ,uint8_t mask, uint8_t data);
 	void writeRegister(uint8_t command ,uint8_t data);
 	uint8_t readRegister(uint8_t command);
+
+	uint32_t detectToggle(uint32_t currentState, uint32_t currentTime);
 };
 
 #endif /* SRC_BQ25619_H_ */

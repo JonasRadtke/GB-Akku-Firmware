@@ -24,6 +24,10 @@ private:
 
 	uint32_t timeStatus = 0;
 	uint32_t sleepingDelay = 0;
+
+	uint32_t cantChargeDetected = 0;
+	uint32_t ovpUvpStep = 0;
+	uint32_t ovpUvpStepTime = 0;
 public:
 	gbakku();
 	void init();
@@ -33,6 +37,8 @@ public:
 
 	void goingToSleep();
 	void wakeUp();
+
+	void ovpUvpCycle();
 };
 
 #endif /* SRC_GBAKKU_H_ */
